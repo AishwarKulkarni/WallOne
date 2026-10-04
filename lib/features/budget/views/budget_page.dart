@@ -56,7 +56,6 @@ class _BudgetPageState extends State<BudgetPage>
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
@@ -245,231 +244,234 @@ class _BudgetPageState extends State<BudgetPage>
         child: Stack(
           children: [
             // Decorative elements
-          Positioned(
-            right: -30,
-            top: -30,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primaryColor(context).withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -20,
-            bottom: -20,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: primaryColor(context).withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          // Decorative dots pattern
-          Positioned(
-            right: 40,
-            top: 40,
-            child: _buildDotPattern(
-                6, 6, 4, 4, primaryColor(context).withValues(alpha: 0.1)),
-          ),
-          Positioned(
-            left: 30,
-            bottom: 30,
-            child: _buildDotPattern(
-                4, 4, 3, 3, primaryColor(context).withValues(alpha: 0.1)),
-          ),
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Monthly Income Column
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: BoxDecoration(
-                                  color: primaryColor(context)
-                                      .withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  Icons.account_balance_wallet,
-                                  color: primaryColor(context)
-                                      .withValues(alpha: 0.9),
-                                  size: screenWidth / 25,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Total Savings',
-                                style: GoogleFonts.outfit(
-                                  fontSize: screenWidth / 25,
-                                  color: primaryColor(context)
-                                      .withValues(alpha: 0.9),
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "$symbol${budgetProvider.monthlySavings.toStringAsFixed(2)}",
-                            style: GoogleFonts.outfit(
-                              fontSize: screenWidth / 16,
-                              fontWeight: FontWeight.bold,
-                              color: primaryColor(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    UsageCard(
-                      budgetProvider: budgetProvider,
-                      balanceProvider: balanceProvider,
-                      progress: progress,
-                    ),
-                  ],
+            Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primaryColor(context).withValues(alpha: 0.05),
                 ),
-                const Spacer(),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+              ),
+            ),
+            Positioned(
+              left: -20,
+              bottom: -20,
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primaryColor(context).withValues(alpha: 0.05),
+                ),
+              ),
+            ),
+            // Decorative dots pattern
+            Positioned(
+              right: 40,
+              top: 40,
+              child: _buildDotPattern(
+                  6, 6, 4, 4, primaryColor(context).withValues(alpha: 0.1)),
+            ),
+            Positioned(
+              left: 30,
+              bottom: 30,
+              child: _buildDotPattern(
+                  4, 4, 3, 3, primaryColor(context).withValues(alpha: 0.1)),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Monthly Income Column
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: primaryColor(context)
-                                    .withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Icon(
-                                Icons.account_balance,
-                                color: primaryColor(context)
-                                    .withValues(alpha: 0.9),
-                                size: 14,
-                              ),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor(context)
+                                        .withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.account_balance_wallet,
+                                    color: primaryColor(context)
+                                        .withValues(alpha: 0.9),
+                                    size: screenWidth / 25,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Total Savings',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: screenWidth / 25,
+                                    color: primaryColor(context)
+                                        .withValues(alpha: 0.9),
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(height: 8),
                             Text(
-                              'Monthly Expenses',
+                              "$symbol${budgetProvider.monthlySavings.toStringAsFixed(2)}",
                               style: GoogleFonts.outfit(
-                                fontSize: screenWidth / 27,
-                                color: primaryColor(context)
-                                    .withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w500,
+                                fontSize: screenWidth / 16,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor(context),
                               ),
                             ),
                           ],
                         ),
-                        Text(
-                          '$symbol${monthlyExpenses.toStringAsFixed(2)}',
-                          style: GoogleFonts.outfit(
-                            fontSize: 16,
-                            color: primaryColor(context),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Stack(
-                      children: [
-                        // Background progress bar
-                        Container(
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: primaryColor(context).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                        // Foreground progress bar
-                        FractionallySizedBox(
-                          widthFactor: progress,
-                          child: Container(
-                            height: 12,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  progressColor.withValues(alpha: 0.7),
-                                  progressColor,
-                                ],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                              borderRadius: BorderRadius.circular(6),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: progressColor.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                      ),
+
+                      UsageCard(
+                        budgetProvider: budgetProvider,
+                        balanceProvider: balanceProvider,
+                        progress: progress,
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: primaryColor(context)
+                                      .withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                              ],
+                                child: Icon(
+                                  Icons.account_balance,
+                                  color: primaryColor(context)
+                                      .withValues(alpha: 0.9),
+                                  size: 14,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Monthly Expenses',
+                                style: GoogleFonts.outfit(
+                                  fontSize: screenWidth / 27,
+                                  color: primaryColor(context)
+                                      .withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Text(
+                            '$symbol${monthlyExpenses.toStringAsFixed(2)}',
+                            style: GoogleFonts.outfit(
+                              fontSize: 16,
+                              color: primaryColor(context),
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: (progress > 0.8
-                                    ? Colors.red
-                                    : primaryColor(context))
-                                .withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Stack(
+                        children: [
+                          // Background progress bar
+                          Container(
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color:
+                                  primaryColor(context).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
                           ),
-                          child: Icon(
-                            progress > 0.8
-                                ? Icons.warning_amber_rounded
-                                : Icons.info_outline,
-                            color: progress > 0.8
-                                ? Colors.red.shade300
-                                : primaryColor(context).withValues(alpha: 0.9),
-                            size: 14,
+                          // Foreground progress bar
+                          FractionallySizedBox(
+                            widthFactor: progress,
+                            child: Container(
+                              height: 12,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    progressColor.withValues(alpha: 0.7),
+                                    progressColor,
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: progressColor.withValues(alpha: 0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '${(progress * 100).toStringAsFixed(1)}% of monthly income spent',
-                          style: GoogleFonts.outfit(
-                            fontSize: screenWidth / 27,
-                            color: progress > 0.8
-                                ? Colors.red.shade300
-                                : primaryColor(context).withValues(alpha: 0.9),
-                            fontWeight: FontWeight.w500,
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: (progress > 0.8
+                                      ? Colors.red
+                                      : primaryColor(context))
+                                  .withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Icon(
+                              progress > 0.8
+                                  ? Icons.warning_amber_rounded
+                                  : Icons.info_outline,
+                              color: progress > 0.8
+                                  ? Colors.red.shade300
+                                  : primaryColor(context)
+                                      .withValues(alpha: 0.9),
+                              size: 14,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                          const SizedBox(width: 6),
+                          Text(
+                            '${(progress * 100).toStringAsFixed(1)}% of monthly income spent',
+                            style: GoogleFonts.outfit(
+                              fontSize: screenWidth / 27,
+                              color: progress > 0.8
+                                  ? Colors.red.shade300
+                                  : primaryColor(context)
+                                      .withValues(alpha: 0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }

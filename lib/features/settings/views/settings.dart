@@ -1,10 +1,10 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:wallone/features/ai_adviser/views/tabs/ai_settings_tab.dart';
 import 'package:wallone/features/ai_adviser/providers/adviser_provider.dart';
 import 'package:wallone/features/budget/providers/budget_provider.dart';
 import 'package:wallone/features/categories/providers/category_provider.dart';
@@ -13,7 +13,6 @@ import 'package:wallone/core/theme/theme_provider.dart';
 import 'package:wallone/features/dashboard/providers/balance_provider.dart';
 import 'package:wallone/features/settings/providers/userprofile_provider.dart';
 import 'package:wallone/core/utils/constants.dart';
-import 'package:wallone/features/categories/views/category_management.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -80,9 +79,11 @@ class _SettingsPageState extends State<SettingsPage> {
               fontWeight: FontWeight.bold,
             ),
             controller: controller,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Name',
               hintText: 'Enter your name',
+              labelStyle: TextStyle(color: primaryColor(context)),
+              hintStyle: TextStyle(color: budgetTextLight(context)),
             ),
             autofocus: true,
           ),
@@ -106,7 +107,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Text(
                 'Save',
                 style: GoogleFonts.outfit(
-                  color: purpleColors(context),
+                  color: primaryColor(context),
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -225,9 +226,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       top: 0,
                       child: IconButton(
                         onPressed: _pickImage,
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.add,
-                          color: Colors.white,
+                          color: inversePrimaryColor(context),
                           size: 40,
                         ),
                       ),
@@ -252,7 +253,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       onTap: _editName,
                       child: Icon(
                         Icons.edit_outlined,
-                        color: purpleColors(context),
+                        color: primaryColor(context),
                         size: 17,
                       ),
                     ),
@@ -360,12 +361,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 trailing: Icon(Icons.arrow_forward_ios,
                     color: budgetTextLight(context), size: 18),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CategoryManagementPage(),
-                    ),
-                  );
+                  context.push('/category-management');
                 },
               ),
             ],
@@ -393,12 +389,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 trailing: Icon(Icons.arrow_forward_ios,
                     color: budgetTextLight(context), size: 18),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AISettingsTab(),
-                    ),
-                  );
+                  context.push('/ai-settings');
                 },
               ),
             ],
@@ -450,7 +441,7 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Text(
             title,
             style: GoogleFonts.outfit(
-              fontSize: 18,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               color: budgetTextLight(context),
             ),

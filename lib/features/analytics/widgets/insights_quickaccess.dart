@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:wallone/features/ai_adviser/views/tabs/Insights%20Tab/widgets/placeholders.dart';
@@ -80,7 +81,7 @@ class MinimalInsightDisplay extends StatelessWidget {
                             style: GoogleFonts.outfit(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: cardTextColor(context),
+                              color: primaryColor(context),
                             ),
                           ),
                         ],
@@ -91,8 +92,8 @@ class MinimalInsightDisplay extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color:
-                              insightHealthScoreColor(healthScore).withAlpha(30),
+                          color: insightHealthScoreColor(healthScore)
+                              .withAlpha(30),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: insightHealthScoreColor(healthScore),
@@ -128,12 +129,8 @@ class MinimalInsightDisplay extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: purpleColors(context).withAlpha(15),
+                      color: budgetBackgroundLight(context),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: purpleColors(context).withAlpha(50),
-                        width: 1,
-                      ),
                     ),
                     child: Row(
                       children: [
@@ -159,7 +156,7 @@ class MinimalInsightDisplay extends StatelessWidget {
                                 style: GoogleFonts.outfit(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: cardTextColor(context),
+                                  color: primaryColor(context),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -184,7 +181,7 @@ class MinimalInsightDisplay extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: purpleColors(context),
+                              color: budgetBackgroundLight(context),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -192,7 +189,7 @@ class MinimalInsightDisplay extends StatelessWidget {
                               style: GoogleFonts.outfit(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: primaryColor(context),
                               ),
                             ),
                           ),
@@ -255,14 +252,14 @@ class MinimalInsightDisplay extends StatelessWidget {
                                 style: GoogleFonts.outfit(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: primaryColor(context),
                                 ),
                               ),
                               const SizedBox(width: 4),
-                              const Icon(
+                              Icon(
                                 Icons.arrow_forward_ios,
                                 size: 12,
-                                color: Colors.white,
+                                color: primaryColor(context),
                               ),
                             ],
                           ),
@@ -284,7 +281,7 @@ class MinimalInsightDisplay extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: cardTextColor(context).withAlpha(20),
+        color: budgetBackgroundLight(context),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -293,18 +290,18 @@ class MinimalInsightDisplay extends StatelessWidget {
           Icon(
             icon,
             size: 12,
-            color: cardTextColor(context),
+            color: primaryColor(context),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 2),
           Text(
             value,
             style: GoogleFonts.outfit(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: cardTextColor(context),
+              color: primaryColor(context),
             ),
           ),
-          const SizedBox(width: 2),
+          const SizedBox(width: 4),
           Text(
             label,
             style: GoogleFonts.outfit(
@@ -370,9 +367,7 @@ class MinimalInsightDisplay extends StatelessWidget {
       ),
     );
   }
-
 }
-
 
 /// Enhanced Insights Tab with minimal design
 class EnhancedInsightsTab extends StatelessWidget {
@@ -407,7 +402,7 @@ class EnhancedInsightsTab extends StatelessWidget {
                 child: MinimalInsightDisplay(
                   onTap: () {
                     // Navigate to detailed insights page
-                    Navigator.pushNamed(context, '/detailed-insights');
+                    context.go('/ai');
                   },
                 ),
               ),

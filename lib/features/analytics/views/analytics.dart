@@ -52,7 +52,6 @@ class _AnalyticsPageState extends State<AnalyticsPage>
         return FadeTransition(
           opacity: _fadeAnimation,
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(

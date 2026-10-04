@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,7 +23,6 @@ class EditTransactionPage extends StatefulWidget {
 
 class _EditTransactionPageState extends State<EditTransactionPage> {
   final TextEditingController _controller = TextEditingController();
-  double _fieldWidth = 50;
 
   String? selectedTitle;
   String? selectedCategory;
@@ -38,15 +37,12 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
     selectedTitle = widget.transaction.title;
     selectedCategory = widget.transaction.category;
     _controller.text = widget.transaction.amount.toStringAsFixed(2);
-    _updateFieldWidth();
 
     // Set the transaction type based on the existing transaction.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TransactionTypeProvider>(context, listen: false)
           .setTransactionType(!widget.transaction.isIncome);
     });
-
-    _controller.addListener(_updateFieldWidth);
 
     // Initialize selected date/time from the existing transaction
     try {
@@ -59,25 +55,6 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
       _selectedTime = null;
       dateConfirmed = false;
     }
-  }
-
-  void _updateFieldWidth() {
-    final textSize = (TextPainter(
-      text: TextSpan(
-        text: _controller.text.isEmpty ? "0" : _controller.text,
-        style: GoogleFonts.outfit(
-          fontSize: 70,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      maxLines: 1,
-      textDirection: TextDirection.ltr,
-    )..layout())
-        .size;
-
-    setState(() {
-      _fieldWidth = textSize.width + 5;
-    });
   }
 
   void _showDateTimePicker() {
@@ -344,46 +321,65 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  symbol,
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    color: purpleColors(context),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(
-                  width: _fieldWidth,
-                  child: TextField(
-                    controller: _controller,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      signed: false,
-                      decimal: true,
-                    ),
-                    textAlign: TextAlign.center,
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final textSize = (TextPainter(
+                  text: TextSpan(
+                    text: _controller.text.isEmpty ? "0" : _controller.text,
                     style: GoogleFonts.outfit(
                       fontSize: 70,
-                      color: primaryColor(context),
                       fontWeight: FontWeight.bold,
                     ),
-                    decoration: InputDecoration(
-                      hintText: "0",
-                      hintStyle: TextStyle(
-                        color: primaryColor(context),
-                      ),
-                      border: InputBorder.none,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d+\.?\d{0,2}$')),
-                      LengthLimitingTextInputFormatter(7),
-                    ],
                   ),
-                ),
-              ],
+                  maxLines: 1,
+                  textDirection: TextDirection.ltr,
+                )..layout())
+                    .size;
+                final fieldWidth = textSize.width + 5;
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      symbol,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        color: purpleColors(context),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(
+                      width: fieldWidth,
+                      child: TextField(
+                        controller: _controller,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          signed: false,
+                          decimal: true,
+                        ),
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          fontSize: 70,
+                          color: primaryColor(context),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: "0",
+                          hintStyle: TextStyle(
+                            color: primaryColor(context),
+                          ),
+                          border: InputBorder.none,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d{0,2}$')),
+                          LengthLimitingTextInputFormatter(7),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const Spacer(),
             Align(
@@ -507,4 +503,3 @@ class _EditTransactionPageState extends State<EditTransactionPage> {
     );
   }
 }
-

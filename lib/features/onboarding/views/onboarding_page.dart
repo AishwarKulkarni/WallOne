@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
-import 'package:wallone/features/onboarding/views/user_setup.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wallone/core/utils/constants.dart';
 
 class OnboardingModel {
@@ -54,12 +54,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         currentIndex++;
       });
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const UserSetupPage(),
-        ),
-      );
+      context.go('/user_setup');
     }
   }
 

@@ -1,15 +1,16 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:device_preview/device_preview.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wallone/firebase_options.dart';
-import 'package:wallone/features/onboarding/views/onboarding_page.dart';
 import 'package:wallone/splash_screen.dart';
+import 'package:wallone/core/routes/app_router.dart';
 import 'package:wallone/features/ai_adviser/providers/adviser_provider.dart';
 import 'package:wallone/features/dashboard/providers/balance_provider.dart';
 import 'package:wallone/features/investments/providers/investment_provider.dart';
@@ -19,9 +20,9 @@ import 'package:wallone/features/transactions/providers/list_provider.dart';
 import 'package:wallone/core/theme/theme_provider.dart';
 import 'package:wallone/features/transactions/providers/transaction_type_provider.dart';
 import 'package:wallone/features/settings/providers/userprofile_provider.dart';
-import 'package:wallone/core/utils/layout.dart';
 import 'package:wallone/core/services/purchase_service.dart';
 import 'package:wallone/core/services/notification_service.dart';
+import 'package:wallone/core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -170,6 +171,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   bool? _hasSeenOnboarding;
+  GoRouter? _router;
   StreamSubscription<User?>? _authSubscription;
   bool _aiInitialized = false;
 
@@ -235,39 +237,48 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Future<void> _loadHasSeenOnboarding() async {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
+      bool value = false;
+      
       if (uid == null) {
         if (kDebugMode) {
           debugPrint('[MyApp] No user logged in, hasSeenOnboarding -> false');
         }
-        if (mounted) {
-          setState(() {
-            _hasSeenOnboarding = false;
-          });
+      } else {
+        final userDoc =
+            await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        value = userDoc.data()?['hasSeenOnboarding'] as bool? ?? false;
+        if (kDebugMode) {
+          debugPrint('[MyApp] _loadHasSeenOnboarding from Firestore -> $value');
         }
-        return;
       }
 
-      final userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      // Instantiate router outside setState so if it throws, we don't end up with partial state
+      final newRouter = AppRouter.router(
+          initialLocation: value ? '/layout' : '/onboarding');
 
-      final value = userDoc.data()?['hasSeenOnboarding'] as bool? ?? false;
-      if (kDebugMode) {
-        debugPrint('[MyApp] _loadHasSeenOnboarding from Firestore -> $value');
-      }
       if (mounted) {
         setState(() {
+          _router = newRouter;
           _hasSeenOnboarding = value;
         });
       }
-    } catch (e) {
+    } catch (e, st) {
       if (kDebugMode) {
-        debugPrint('[MyApp] Error loading hasSeenOnboarding: $e');
+        debugPrint('[MyApp] Error loading hasSeenOnboarding: $e\n$st');
       }
       // Default to false if there's an error
-      if (mounted) {
-        setState(() {
-          _hasSeenOnboarding = false;
-        });
+      try {
+        final fallbackRouter = AppRouter.router(initialLocation: '/onboarding');
+        if (mounted) {
+          setState(() {
+            _router = fallbackRouter;
+            _hasSeenOnboarding = false;
+          });
+        }
+      } catch (routerError, routerSt) {
+        if (kDebugMode) {
+           debugPrint('[MyApp] CRITICAL: Failed to instantiate fallback router: $routerError\n$routerSt');
+        }
       }
     }
   }
@@ -352,68 +363,35 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    // While we are still loading, show the custom splash screen
-    if (_hasSeenOnboarding == null) {
+    // Safely ensure _router is initialized if we have onboarding status but it was somehow null
+    if (_hasSeenOnboarding != null && _router == null) {
+      try {
+        _router = AppRouter.router(
+            initialLocation: _hasSeenOnboarding! ? '/layout' : '/onboarding');
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[MyApp] Failed to lazy-init router in build: $e');
+        }
+      }
+    }
+
+    // While we are still loading or if router failed to initialize, show the custom splash screen
+    if (_hasSeenOnboarding == null || _router == null) {
       return MaterialApp(
-        theme: ThemeData.light(),
-        darkTheme: ThemeData.dark(),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
         themeMode: themeProvider.themeMode,
         debugShowCheckedModeBanner: false,
         home: const SplashScreen(),
       );
     }
 
-    final showOnboarding = !(_hasSeenOnboarding!);
-
-    return MaterialApp(
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
+    return MaterialApp.router(
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       themeMode: themeProvider.themeMode,
       debugShowCheckedModeBanner: false,
-      home: showOnboarding
-          ? OnboardingPage(
-              onFinish: () async {
-                try {
-                  // Mark onboarding as complete in Firestore
-                  final uid = FirebaseAuth.instance.currentUser?.uid;
-                  if (uid != null) {
-                    await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(uid)
-                        .set({'hasSeenOnboarding': true},
-                            SetOptions(merge: true));
-                    if (kDebugMode) {
-                      debugPrint(
-                          '[Onboarding] hasSeenOnboarding saved to Firestore');
-                    }
-                  }
-
-                  if (context.mounted) {
-                    // Update local state
-                    setState(() {
-                      _hasSeenOnboarding = true;
-                    });
-
-                    // Navigate to main layout
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const DesignLayout()),
-                    );
-                  }
-                } catch (e) {
-                  if (kDebugMode) {
-                    debugPrint(
-                        '[Onboarding] Error saving onboarding state: $e');
-                  }
-                  // Still navigate even if saving failed
-                  if (context.mounted) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const DesignLayout()),
-                    );
-                  }
-                }
-              },
-            )
-          : const DesignLayout(),
+      routerConfig: _router,
     );
   }
 }

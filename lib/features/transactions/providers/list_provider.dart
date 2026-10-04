@@ -164,7 +164,7 @@ class ListProvider with ChangeNotifier {
   // Filter state
   bool _isFilterActive = false;
   bool _isExpensesSelected = true;
-  String _currentPeriod = 'All Transactions';
+  String _currentPeriod = 'All Dates';
 
   // Firestore subscription & auth
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _txSub;
@@ -346,7 +346,7 @@ class ListProvider with ChangeNotifier {
         .where((t) => isExpensesSelected ? !t.isIncome : t.isIncome)
         .toList();
 
-    if (selectedDate != 'All Transactions') {
+    if (selectedDate != 'All Dates') {
       filtered = filtered.where((t) {
         try {
           final txnDate = DateTime.parse(t.date);
@@ -386,7 +386,7 @@ class ListProvider with ChangeNotifier {
   }
 
   List<AllListProvider> getTransactionsForDate(String dateFilter) {
-    if (dateFilter == 'All Transactions') return getTransactions();
+    if (dateFilter == 'All Dates') return getTransactions();
     final result = _transactions.where((t) {
       try {
         final txnDate = DateTime.parse(t.date);
@@ -492,7 +492,7 @@ class ListProvider with ChangeNotifier {
   }
 
   Future<void> saveTransactions() async {
-    // This method will upsert all transactions to Firestore.
+    // This method will upsert all Dates to Firestore.
     // For large datasets this may be inefficient; it's fine for typical small user transaction volumes.
     try {
       final col = _txCollection;
@@ -847,7 +847,7 @@ class ListProvider with ChangeNotifier {
       // Rebuild balance history to empty
       await _rebuildAndSaveBalanceHistory();
       notifyListeners();
-      _log('Cleared all transactions from Firestore and local cache');
+      _log('Cleared all Dates from Firestore and local cache');
     } catch (e, st) {
       _logError('Failed to clear transactions', e, st);
     }

@@ -10,14 +10,14 @@ class TotalExpenseBoxWidget extends StatelessWidget {
   final String? label;
   final String balanceType; // 'daily', 'weekly', 'monthly', or 'total'
   final bool isExpensesSelected; // Whether expenses or incomes are selected
-  final String selectedPeriod; // 'All Transactions' or date key
+  final String selectedPeriod; // 'All Dates' or date key
 
   const TotalExpenseBoxWidget({
     super.key,
     this.label,
     required this.balanceType,
     required this.isExpensesSelected,
-    this.selectedPeriod = 'All Transactions',
+    this.selectedPeriod = 'All Dates',
   });
 
   @override
@@ -31,9 +31,9 @@ class TotalExpenseBoxWidget extends StatelessWidget {
       case 'daily':
         double sum = 0.0;
 
-        // For daily balance, always filter to the specific date (today if 'All Transactions')
+        // For daily balance, always filter to the specific date (today if 'All Dates')
         final dateToFilter =
-            selectedPeriod == 'All Transactions' ? 'Today' : selectedPeriod;
+            selectedPeriod == 'All Dates' ? 'Today' : selectedPeriod;
         final txs = listProvider.getTransactionsForDate(dateToFilter);
 
         for (final t in txs) {

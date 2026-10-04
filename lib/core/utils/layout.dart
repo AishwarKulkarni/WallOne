@@ -1,70 +1,42 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:wallone/features/about_us/views/about_us.dart';
-import 'package:wallone/features/ai_adviser/views/ai_ml_dashboard.dart';
-import 'package:wallone/features/analytics/views/analytics.dart';
-import 'package:wallone/features/budget/views/budget_page.dart';
-import 'package:wallone/features/dashboard/views/dashboard.dart';
-import 'package:wallone/features/onboarding/views/user_setup.dart';
-import 'package:wallone/features/settings/views/settings.dart';
-import 'package:wallone/features/transactions/views/add_transactions.dart';
 import 'package:wallone/features/ai_adviser/providers/adviser_provider.dart';
 import 'package:wallone/features/dashboard/providers/balance_provider.dart';
 import 'package:wallone/features/settings/providers/userprofile_provider.dart';
 import 'package:wallone/core/utils/constants.dart';
 
+import 'package:go_router/go_router.dart';
+
 class DesignLayout extends StatefulWidget {
-  const DesignLayout({super.key});
+  final StatefulNavigationShell navigationShell;
+
+  const DesignLayout({super.key, required this.navigationShell});
 
   @override
   State<DesignLayout> createState() => _DesignLayoutState();
 }
 
 class _DesignLayoutState extends State<DesignLayout> {
-  int _selectedIndex = 0;
-  bool _showAppBarBalance = false;
-  // List of pages to display based on the selected index
-  List<Widget> get _pages => [
-        DashboardPage(
-          onBalanceVisibilityChanged: (isVisible) {
-            setState(() {
-              _showAppBarBalance = !isVisible;
-            });
-          },
-        ),
-        const BudgetPage(),
-        const AddTransactionsPage(),
-        AnalyticsPage(
-          onSeeAllAIAdvisor: () {
-            setState(() {
-              _selectedIndex = 4;
-            });
-          },
-        ),
-        const AIAdvisorDashboard(),
-      ];
+  final bool _showAppBarBalance = false;
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    widget.navigationShell.goBranch(
+      index,
+      // A common pattern when using bottom navigation bars is to support
+      // navigating to the initial location when tapping the item that is
+      // already active.
+      initialLocation: index == widget.navigationShell.currentIndex,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final profile = context.watch<UserProfileProvider>();
-    final profileName = profile.userName ?? 'Guest User';
-    final profileImagePath = profile.coverImagePath;
-
-    final currencyCode = context.watch<BalanceProvider>().currencyCode;
-    final symbol =
-        NumberFormat.simpleCurrency(name: currencyCode).currencySymbol;
 
     return Scaffold(
       // Drawer
@@ -84,77 +56,79 @@ class _DesignLayoutState extends State<DesignLayout> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (context) {
-                              return const SettingsPage();
+                  child: Consumer<UserProfileProvider>(
+                    builder: (context, profile, child) {
+                      final profileName = profile.userName ?? 'Guest User';
+                      final profileImagePath = profile.coverImagePath;
+                      return Row(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              context.push('/settings');
                             },
-                          ));
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                              color: mainColor(context),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: boxColor(context),
-                                width: 3,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: shadowColor(context),
-                                  blurRadius: 5,
-                                )
-                              ]),
-                          child: ClipOval(
-                            child: profileImagePath != null &&
-                                    File(profileImagePath).existsSync()
-                                ? Image.file(
-                                    File(profileImagePath),
-                                    width: 40,
-                                    height: 40,
-                                    fit: BoxFit.cover,
-                                  )
-                                : CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: primaryColor(context),
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 20,
-                                      color: inversePrimaryColor(context),
-                                    ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  color: mainColor(context),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: boxColor(context),
+                                    width: 3,
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: shadowColor(context),
+                                      blurRadius: 5,
+                                    )
+                                  ]),
+                              child: ClipOval(
+                                child: profileImagePath != null &&
+                                        File(profileImagePath).existsSync()
+                                    ? Image.file(
+                                        File(profileImagePath),
+                                        width: 40,
+                                        height: 40,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor: primaryColor(context),
+                                        child: Icon(
+                                          Icons.person,
+                                          size: 20,
+                                          color: inversePrimaryColor(context),
+                                        ),
+                                      ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              profileName,
-                              style: GoogleFonts.outfit(
-                                color: inversePrimaryColor(context),
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  profileName,
+                                  style: GoogleFonts.outfit(
+                                    color: inversePrimaryColor(context),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  profileName,
+                                  style: GoogleFonts.outfit(
+                                    color: inversePrimaryColor(context),
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
                             ),
-                            Text(
-                              profileName,
-                              style: GoogleFonts.outfit(
-                                color: inversePrimaryColor(context),
-                                fontSize: 14,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -173,7 +147,7 @@ class _DesignLayoutState extends State<DesignLayout> {
                   ),
                 ),
                 onTap: () {
-                  Navigator.pop(context);
+                  context.pop();
                 },
               ),
             ),
@@ -191,11 +165,7 @@ class _DesignLayoutState extends State<DesignLayout> {
                   ),
                 ),
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (context) {
-                      return const SettingsPage();
-                    },
-                  ));
+                  context.push('/settings');
                 },
               ),
             ),
@@ -213,11 +183,7 @@ class _DesignLayoutState extends State<DesignLayout> {
                   ),
                 ),
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (context) {
-                      return const AboutUsPage();
-                    },
-                  ));
+                  context.push('/about');
                 },
               ),
             ),
@@ -252,12 +218,7 @@ class _DesignLayoutState extends State<DesignLayout> {
 
                       // Navigate back to UserSetupPage (or login page)
                       if (context.mounted) {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const UserSetupPage()),
-                          (route) => false, // remove all previous routes
-                        );
+                        context.go('/user_setup');
                       }
                     } catch (e) {
                       // Optional: show error
@@ -282,11 +243,11 @@ class _DesignLayoutState extends State<DesignLayout> {
         centerTitle: true,
         scrolledUnderElevation: 0,
         title: _AppBarBalanceTitle(
-          selectedIndex: _selectedIndex,
+          selectedIndex: widget.navigationShell.currentIndex,
           showAppBarBalance: _showAppBarBalance,
         ),
         actions: [
-          if (_selectedIndex == 4)
+          if (widget.navigationShell.currentIndex == 4)
             Consumer<AIAdvisorProvider>(
               builder: (context, provider, child) {
                 return IconButton(
@@ -326,12 +287,14 @@ class _DesignLayoutState extends State<DesignLayout> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: _pages[_selectedIndex],
+            key: const ValueKey('NavigationShellPositioned'),
+            child: widget.navigationShell,
           ),
 
           //
 
           Align(
+            key: const ValueKey('BottomNavBarAlign'),
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -355,8 +318,9 @@ class _DesignLayoutState extends State<DesignLayout> {
                       icon: Icon(
                         Icons.home_outlined,
                         size: 28,
-                        color:
-                            _selectedIndex == 0 ? primaryColor(context) : null,
+                        color: widget.navigationShell.currentIndex == 0
+                            ? primaryColor(context)
+                            : null,
                       ),
                     ),
                     IconButton(
@@ -364,31 +328,31 @@ class _DesignLayoutState extends State<DesignLayout> {
                       icon: Icon(
                         Icons.account_balance_wallet_outlined,
                         size: 26,
-                        color:
-                            _selectedIndex == 1 ? primaryColor(context) : null,
+                        color: widget.navigationShell.currentIndex == 1
+                            ? primaryColor(context)
+                            : null,
                       ),
                     ),
                     SizedBox(
                       child: FloatingActionButton(
                         elevation: 10,
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) {
-                                return const AddTransactionsPage();
-                              },
-                            ),
-                          );
+                          context.push('/add-transaction');
                         },
                         backgroundColor: primaryColor(context),
-                        child: Text(
-                          symbol,
-                          style: GoogleFonts.outfit(
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                            color: purpleColors(context),
-                          ),
+                        child: Consumer<BalanceProvider>(
+                          builder: (context, balanceProvider, child) {
+                            final currencyCode = balanceProvider.currencyCode;
+                            final symbol = NumberFormat.simpleCurrency(name: currencyCode).currencySymbol;
+                            return Text(
+                              symbol,
+                              style: GoogleFonts.outfit(
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
+                                color: purpleColors(context),
+                              ),
+                            );
+                          }
                         ),
                       ),
                     ),
@@ -397,8 +361,9 @@ class _DesignLayoutState extends State<DesignLayout> {
                       icon: Icon(
                         Icons.analytics_outlined,
                         size: 28,
-                        color:
-                            _selectedIndex == 3 ? primaryColor(context) : null,
+                        color: widget.navigationShell.currentIndex == 3
+                            ? primaryColor(context)
+                            : null,
                       ),
                     ),
                     IconButton(
@@ -406,8 +371,9 @@ class _DesignLayoutState extends State<DesignLayout> {
                       icon: Icon(
                         Icons.bolt,
                         size: 28,
-                        color:
-                            _selectedIndex == 4 ? primaryColor(context) : null,
+                        color: widget.navigationShell.currentIndex == 4
+                            ? primaryColor(context)
+                            : null,
                       ),
                     ),
                   ],

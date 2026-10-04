@@ -1,4 +1,5 @@
-﻿import 'package:fl_chart/fl_chart.dart';
+import 'dart:math' as math;
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -14,31 +15,71 @@ class InvestmentChart extends StatelessWidget {
     required this.screenWidth,
   });
 
-  /// Builds FlSpots from the percentage history list with smooth interpolation.
-  /// Adds intermediate points between each entry for elegant curves.
-  List<FlSpot> _buildHistorySpots(List<double> history) {
+  /// Builds FlSpots from the history list, injecting a Brownian bridge (random walk)
+  /// between each real data point. This simulates a realistic, zigzagging stock market
+  /// chart even when data is sparse (e.g., only a few months or skipped months).
+  List<FlSpot> _buildZigzagSpots(List<double> history, List<bool> skippedSegments) {
     if (history.isEmpty) return [];
     if (history.length == 1) {
       return [FlSpot(0, history.first), FlSpot(1, history.first)];
     }
 
+    final globalMax = history.reduce(math.max);
+
     final spots = <FlSpot>[];
-    const int stepsPerSegment = 6; // intermediate points between entries
+    const int stepsPerSegment = 15; // Number of zigzags between months
+    
+    // Fixed seed ensures the generated zigzags remain completely stable across rebuilds.
+    // It also ensures historical months keep their exact shape as new months are added.
+    final random = math.Random(42);
 
     for (int i = 0; i < history.length - 1; i++) {
       final y1 = history[i];
       final y2 = history[i + 1];
+      final isSkipped = skippedSegments[i];
+      
+      spots.add(FlSpot(i.toDouble(), y1));
 
-      for (int s = 0; s < stepsPerSegment; s++) {
-        final t = s / stepsPerSegment; // 0.0 … <1.0
-        // Smooth ease-in-out interpolation
-        final eased = t * t * (3.0 - 2.0 * t);
-        final y = y1 + (y2 - y1) * eased;
+      // Generate a random walk
+      List<double> walk = [0.0];
+      double currentWalk = 0.0;
+      for (int s = 1; s <= stepsPerSegment; s++) {
+        currentWalk += (random.nextDouble() - 0.5);
+        walk.add(currentWalk);
+      }
+      
+      final walkEnd = walk.last;
+      final avg = (y1 + y2) / 2;
+      
+      // Amplitude of the zigzags: roughly 5% of the value.
+      final amplitude = avg == 0 ? 50.0 : avg * 0.05; 
+      
+      for (int s = 1; s < stepsPerSegment; s++) {
+        final t = s / stepsPerSegment;
         final x = i.toDouble() + t;
-        spots.add(FlSpot(x, y));
+        
+        // Linear baseline between the two real months
+        double baseline = y1 + (y2 - y1) * t;
+        
+        // If it's a skipped month, apply a U-shape downward dip (parabola)
+        if (isSkipped && y1 > 0) {
+           final dipMagnitude = y1 * 0.15; // 15% visual drop
+           final sag = dipMagnitude * 4 * t * (1 - t);
+           baseline -= sag;
+        }
+        
+        // Brownian bridge: tie the random walk down so it ends exactly at 0 offset
+        final bridge = walk[s] - (walkEnd * t);
+        
+        // Apply the bridge noise to the baseline
+        final finalY = baseline + (bridge * amplitude * 1.5);
+        
+        // Clamp top to globalMax so we don't overshoot all-time high with noise
+        // Do NOT clamp bottom so the dip can be fully visible below historical lows!
+        spots.add(FlSpot(x, math.max(0.0, math.min(finalY, globalMax))));
       }
     }
-    // Add the final point
+    // Ensure the final point perfectly matches the real history
     spots.add(FlSpot((history.length - 1).toDouble(), history.last));
     return spots;
   }
@@ -48,11 +89,12 @@ class InvestmentChart extends StatelessWidget {
     final provider = Provider.of<InvestmentProvider>(context);
     final sw = screenWidth;
 
-    final percentageChange = provider.percentageChange;
-    final history = provider.percentageHistory;
+    // Get transactions and sort by date ascending
+    final transactions = provider.investmentTransactions.toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
 
     // If there are no investments at all, show empty state
-    if (provider.investments.isEmpty) {
+    if (provider.investments.isEmpty && transactions.isEmpty) {
       return Container(
         height: 160,
         decoration: BoxDecoration(
@@ -75,7 +117,8 @@ class InvestmentChart extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.show_chart_rounded,
-                  size: 38, color: const Color(0xFF7C3AED).withValues(alpha: 0.35)),
+                  size: 38,
+                  color: const Color(0xFF7C3AED).withValues(alpha: 0.35)),
               const SizedBox(height: 8),
               Text(
                 'No investment data',
@@ -91,36 +134,148 @@ class InvestmentChart extends StatelessWidget {
       );
     }
 
-    // Prepend 0.0 so the graph always starts from the bottom left
-    final displayHistory = [0.0, ...history];
+    // Process transactions into a monthly history
+    List<double> history = [];
+    List<bool> skippedSegments = [];
+    double finalCumulative = 0;
+    
+    // Check if the user has any recurring investments to warrant a "downfall"
+    final hasRecurring = provider.investments.any((inv) => inv.isOneTime != true);
 
-    // Build spots from history
+    if (transactions.isNotEmpty) {
+      final firstTx = transactions.first;
+      final lastTx = transactions.last;
+
+      int startYear = firstTx.date.year;
+      int startMonth = firstTx.date.month;
+      int endYear = lastTx.date.year;
+      int endMonth = lastTx.date.month;
+
+      // Group amounts by year-month
+      final monthlyAmounts = <String, double>{};
+      for (final tx in transactions) {
+        final key = '${tx.date.year}-${tx.date.month}';
+        monthlyAmounts[key] = (monthlyAmounts[key] ?? 0) + tx.amount;
+      }
+
+      double cumulative = 0;
+      int currY = startYear;
+      int currM = startMonth;
+
+      // Extend to current date so skipped current months are visible
+      final now = DateTime.now();
+      if (endYear < now.year || (endYear == now.year && endMonth < now.month)) {
+        endYear = now.year;
+        endMonth = now.month;
+      }
+
+      // Iterate through every single month from start to end, inserting gaps naturally
+      while (currY < endYear || (currY == endYear && currM <= endMonth)) {
+        final key = '$currY-$currM';
+        if (monthlyAmounts.containsKey(key)) {
+          cumulative += monthlyAmounts[key]!;
+          if (history.isNotEmpty) {
+             skippedSegments.add(false);
+          }
+        } else {
+          if (history.isNotEmpty) {
+             skippedSegments.add(hasRecurring);
+          }
+        }
+        // Using cumulative produces the continuous "waves" (S-curves) going upwards
+        history.add(cumulative);
+
+        currM++;
+        if (currM > 12) {
+          currM = 1;
+          currY++;
+        }
+      }
+      finalCumulative = cumulative;
+    }
+
+    // Build spots from history using our zigzag generator
     List<FlSpot> spots;
-    if (displayHistory.length >= 2) {
-      // Enough data points for a real graph
-      spots = _buildHistorySpots(displayHistory);
+    if (history.isNotEmpty) {
+      spots = _buildZigzagSpots(history, skippedSegments);
     } else {
-      // Very unlikely edge case since we prepended 0.0, but just in case
       spots = [const FlSpot(0, 0), const FlSpot(1, 0)];
     }
 
-    // Determine colours based on latest percentage
-    final bool isHealthy = percentageChange >= 50;
-    final Color stroke =
-        isHealthy ? const Color(0xFF4C1D95) : const Color(0xFFDC2626);
-    final Color glowMid =
-        isHealthy ? const Color(0xFF7C3AED) : const Color(0xFFEF4444);
-    final Color bgLight =
-        isHealthy ? const Color(0xFFEDE9FE) : const Color(0xFFFEE2E2);
+    double minY = spots.map((s) => s.y).reduce(math.min);
+    double maxY = spots.map((s) => s.y).reduce(math.max);
+    double minX = 0;
+    double maxX = spots.last.x;
 
-    return _buildChartCard(
-      context: context,
-      spots: spots,
-      stroke: stroke,
-      glowMid: glowMid,
-      bgLight: bgLight,
-      screenWidth: sw,
-      percentageChange: percentageChange,
+    if (maxX == 0) maxX = 1.0;
+
+    // Add padding to Y axis
+    final yRange = (maxY - minY).abs();
+    final yBuffer =
+        yRange == 0 ? (maxY == 0 ? 100.0 : maxY * 0.15) : yRange * 0.25;
+    final finalMinY = minY < 0 ? minY - yBuffer : math.max(0.0, minY - yBuffer);
+    final finalMaxY = maxY + yBuffer;
+
+    final xBuffer = maxX * 0.05;
+    final finalMinX = minX - xBuffer;
+    final finalMaxX = maxX + xBuffer;
+
+    // Calculate the TRUE historical min and max so the dashed lines/dots don't move 
+    // to the bottom of the artificial visual dip.
+    final trueMinY = history.isNotEmpty ? history.reduce(math.min) : 0.0;
+    final trueMaxY = history.isNotEmpty ? history.reduce(math.max) : 0.0;
+
+    // We hardcode the colors to match the dark premium image requested
+    const Color stroke = Colors.white;
+    const Color glowMid = Color(0xFFE6EE9C); // Pale yellow for min/max
+    const Color bgLight = Color(0xFF19191B); // Dark background
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildChartCard(
+          context: context,
+          spots: spots,
+          stroke: stroke,
+          glowMid: glowMid,
+          bgLight: bgLight,
+          screenWidth: sw,
+          minX: finalMinX,
+          maxX: finalMaxX,
+          minY: finalMinY,
+          maxY: finalMaxY,
+          dataMinY: trueMinY,
+          dataMaxY: trueMaxY,
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton.icon(
+          onPressed: () {
+            provider.simulateInvestmentDeduction();
+          },
+          icon: Icon(
+            Icons.fast_forward_rounded,
+            size: 20,
+            color: inversePrimaryColor(context),
+          ),
+          label: Text(
+            'Simulate Next Month',
+            style: GoogleFonts.outfit(
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              color: inversePrimaryColor(context),
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primaryColor(context),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 0,
+          ),
+        ),
+      ],
     );
   }
 
@@ -131,21 +286,16 @@ class InvestmentChart extends StatelessWidget {
     required Color glowMid,
     required Color bgLight,
     required double screenWidth,
-    required double percentageChange,
+    required double minX,
+    required double maxX,
+    required double minY,
+    required double maxY,
+    required double dataMinY,
+    required double dataMaxY,
   }) {
-    // Fixed Y range for percentage (0–100%)
-    const double minY = 0.0;
-    const double maxY = 105.0; // slight buffer above 100
-
-    // ── X range ──────────────────────────────────────────────────────────────
-    const double minXWidth = 6.0; // Show at least "6 intervals" of space
-    final minX = spots.first.x - 0.1;
-
-    // If we have less than minXWidth intervals, force maxX to maintain the scale
-    final actualXRange = spots.last.x - spots.first.x;
-    final maxX = actualXRange < minXWidth
-        ? spots.first.x + minXWidth
-        : spots.last.x + (actualXRange * 0.02);
+    String formatCurrency(double value) {
+      return '\$${value.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
+    }
 
     const titlesData = FlTitlesData(
       show: true,
@@ -158,14 +308,10 @@ class InvestmentChart extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: bgLight.withValues(alpha: 0.38),
+        color: bgLight,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: stroke.withValues(alpha: 0.08),
-          width: 1.0,
-        ),
       ),
-      padding: const EdgeInsets.only(top: 24, bottom: 2, left: 0, right: 0),
+      padding: const EdgeInsets.only(top: 36, bottom: 28, left: 0, right: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -201,8 +347,7 @@ class InvestmentChart extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     getTooltipItems: (touched) => touched.map((ts) {
                       final val = ts.y;
-                      final text =
-                          '${val >= 0 ? '+' : ''}${val.toStringAsFixed(1)}%';
+                      final text = '₹${val.toStringAsFixed(0)}';
                       return LineTooltipItem(
                         text,
                         GoogleFonts.outfit(
@@ -213,6 +358,45 @@ class InvestmentChart extends StatelessWidget {
                       );
                     }).toList(),
                   ),
+                ),
+                extraLinesData: ExtraLinesData(
+                  horizontalLines: [
+                    if (dataMinY != dataMaxY)
+                      HorizontalLine(
+                        y: dataMinY,
+                        color: Colors.white.withValues(alpha: 0.2),
+                        strokeWidth: 1,
+                        dashArray: [5, 5],
+                        label: HorizontalLineLabel(
+                          show: true,
+                          alignment: Alignment.bottomLeft,
+                          padding: const EdgeInsets.only(left: 16, bottom: 6),
+                          style: GoogleFonts.outfit(
+                            color: glowMid,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                          labelResolver: (line) => formatCurrency(line.y),
+                        ),
+                      ),
+                    HorizontalLine(
+                      y: dataMaxY,
+                      color: Colors.white.withValues(alpha: 0.2),
+                      strokeWidth: 1,
+                      dashArray: [5, 5],
+                      label: HorizontalLineLabel(
+                        show: true,
+                        alignment: Alignment.topLeft,
+                        padding: const EdgeInsets.only(left: 16, top: 6),
+                        style: GoogleFonts.outfit(
+                          color: glowMid,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                        labelResolver: (line) => formatCurrency(line.y),
+                      ),
+                    ),
+                  ],
                 ),
                 minX: minX,
                 maxX: maxX,
@@ -225,33 +409,29 @@ class InvestmentChart extends StatelessWidget {
                 lineBarsData: [
                   LineChartBarData(
                     spots: spots,
-                    isCurved: true,
-                    curveSmoothness: 0.45,
-                    preventCurveOverShooting: true,
-                    preventCurveOvershootingThreshold: 1.5,
+                    isCurved: false,
                     color: stroke,
-                    barWidth: 2.8,
+                    barWidth: 1.8,
                     isStrokeCapRound: true,
                     isStrokeJoinRound: true,
-                    shadow: Shadow(
-                      color: stroke.withValues(alpha: 0.5),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
+                    dotData: FlDotData(
                       show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: const [0.0, 0.55, 1.0],
-                        colors: [
-                          glowMid.withValues(alpha: 0.28),
-                          glowMid.withValues(alpha: 0.07),
-                          bgLight.withValues(alpha: 0.0),
-                        ],
-                      ),
+                      checkToShowDot: (spot, barData) {
+                        // Only show the dot if it aligns perfectly with a real month (integer X)
+                        // This prevents noise peaks in the middle of a month from triggering a dot.
+                        final isRealPoint = spot.x == spot.x.roundToDouble();
+                        return isRealPoint && (spot.y == dataMinY || spot.y == dataMaxY);
+                      },
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 4.5,
+                          color: glowMid,
+                          strokeWidth: 4,
+                          strokeColor: glowMid.withValues(alpha: 0.25),
+                        );
+                      },
                     ),
+                    belowBarData: BarAreaData(show: false),
                   ),
                 ],
               ),
@@ -264,4 +444,3 @@ class InvestmentChart extends StatelessWidget {
     );
   }
 }
-

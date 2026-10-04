@@ -37,12 +37,17 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddCategoryDialog(context),
-        backgroundColor: purpleColors(context),
-        icon: const Icon(Icons.add_rounded, size: 24),
+        backgroundColor: primaryColor(context),
+        icon: Icon(
+          Icons.add_rounded,
+          size: 24,
+          color: inversePrimaryColor(context),
+        ),
         label: Text(
           'Add Category',
           style: GoogleFonts.outfit(
             fontSize: 15,
+            color: inversePrimaryColor(context),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -64,7 +69,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                     child: Icon(
                       Icons.category_outlined,
                       size: 80,
-                      color: purpleColors(context).withValues(alpha: 0.5),
+                      color: primaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -115,9 +120,9 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: shadowColor(context).withValues(alpha: 0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -127,19 +132,20 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                       borderRadius: BorderRadius.circular(20),
                       onTap: () => _showEditCategoryDialog(context, category),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         child: Row(
                           children: [
                             Hero(
                               tag: 'category_${category.name}',
                               child: Container(
-                                width: 56,
-                                height: 56,
+                                width: 36,
+                                height: 36,
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                     colors: [
                                       purpleColors(context),
-                                      purpleColors(context).withValues(alpha: 0.7),
+                                      purpleColors(context)
+                                          .withValues(alpha: 0.7),
                                     ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
@@ -147,8 +153,8 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: purpleColors(context)
-                                          .withValues(alpha: 0.3),
+                                      color: shadowColor(context)
+                                          .withValues(alpha: 0.1),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),
@@ -156,8 +162,8 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                 ),
                                 child: Icon(
                                   category.icon,
-                                  color: Colors.white,
-                                  size: 28,
+                                  color: primaryColor(context),
+                                  size: 18,
                                 ),
                               ),
                             ),
@@ -169,7 +175,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                   Text(
                                     category.name,
                                     style: GoogleFonts.outfit(
-                                      fontSize: 17,
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w600,
                                       color: primaryColor(context),
                                       letterSpacing: -0.3,
@@ -179,9 +185,8 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                   Text(
                                     'Tap to edit',
                                     style: GoogleFonts.outfit(
-                                      fontSize: 13,
-                                      color: primaryColor(context)
-                                          .withValues(alpha: 0.5),
+                                      fontSize: 12,
+                                      color: budgetTextLight(context),
                                     ),
                                   ),
                                 ],
@@ -189,7 +194,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                             ),
                             Container(
                               decoration: BoxDecoration(
-                                color: primaryColor(context).withValues(alpha: 0.05),
+                                color: budgetBackgroundLight(context),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -198,8 +203,8 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                   IconButton(
                                     icon: Icon(
                                       Icons.edit_rounded,
-                                      color: purpleColors(context),
-                                      size: 20,
+                                      color: primaryColor(context),
+                                      size: 18,
                                     ),
                                     onPressed: () => _showEditCategoryDialog(
                                         context, category),
@@ -209,7 +214,7 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
                                     icon: const Icon(
                                       Icons.delete_rounded,
                                       color: Colors.red,
-                                      size: 20,
+                                      size: 18,
                                     ),
                                     onPressed: () => _showDeleteConfirmation(
                                         context, category),
@@ -381,6 +386,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      backgroundColor: inversePrimaryColor(context),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
@@ -396,7 +402,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: purpleColors(context).withValues(alpha: 0.1),
+                        color: budgetBackgroundLight(context),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -411,6 +417,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                         widget.title,
                         style: GoogleFonts.outfit(
                           fontSize: 24,
+                          color: primaryColor(context),
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.5,
                         ),
@@ -424,7 +431,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: primaryColor(context).withValues(alpha: 0.7),
+                    color: primaryColor(context),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -433,17 +440,15 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   decoration: InputDecoration(
                     hintText: 'Enter category name',
                     filled: true,
-                    fillColor: primaryColor(context).withValues(alpha: 0.03),
+                    fillColor: budgetBackgroundLight(context),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: primaryColor(context).withValues(alpha: 0.1),
-                      ),
-                    ),
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: inversePrimaryColor(context))),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
@@ -460,17 +465,14 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: primaryColor(context).withValues(alpha: 0.7),
+                    color: budgetTextLight(context),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Container(
                   height: 240,
                   decoration: BoxDecoration(
-                    color: primaryColor(context).withValues(alpha: 0.03),
-                    border: Border.all(
-                      color: primaryColor(context).withValues(alpha: 0.1),
-                    ),
+                    color: budgetBackgroundLight(context),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: GridView.builder(
@@ -493,20 +495,14 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                           duration: const Duration(milliseconds: 200),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? purpleColors(context)
+                                ? primaryColor(context)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? purpleColors(context)
-                                  : primaryColor(context).withValues(alpha: 0.15),
-                              width: isSelected ? 2 : 1,
-                            ),
                           ),
                           child: Icon(
                             iconMap[iconName],
                             color: isSelected
-                                ? Colors.white
+                                ? inversePrimaryColor(context)
                                 : primaryColor(context).withValues(alpha: 0.6),
                             size: 24,
                           ),
@@ -531,6 +527,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                         'Cancel',
                         style: GoogleFonts.outfit(
                           fontSize: 15,
+                          color: primaryColor(context),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -546,7 +543,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: purpleColors(context),
+                        backgroundColor: primaryColor(context),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
                           vertical: 12,
@@ -560,6 +557,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                         'Save',
                         style: GoogleFonts.outfit(
                           fontSize: 15,
+                          color: inversePrimaryColor(context),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -574,4 +572,3 @@ class _CategoryDialogState extends State<_CategoryDialog> {
     );
   }
 }
-

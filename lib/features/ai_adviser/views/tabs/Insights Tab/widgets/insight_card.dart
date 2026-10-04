@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:wallone/features/ai_adviser/views/tabs/Insights%20Tab/widgets/execution_dialog.dart';
@@ -7,7 +7,7 @@ import 'package:wallone/core/utils/constants.dart';
 import 'package:wallone/features/ai_adviser/services/rule_based_advisor.dart';
 
 /// Enhanced InsightCard with dismissal and custom execution features
-class InsightCard extends StatelessWidget {
+class InsightCard extends StatefulWidget {
   final FinancialInsight insight;
   final VoidCallback? onRefresh;
 
@@ -18,7 +18,15 @@ class InsightCard extends StatelessWidget {
   });
 
   @override
+  State<InsightCard> createState() => _InsightCardState();
+}
+
+class _InsightCardState extends State<InsightCard> {
+  bool _isLoading = false;
+
+  @override
   Widget build(BuildContext context) {
+    final insight = widget.insight;
     final typeIcon = _getTypeIcon(insight.type);
 
     return Card(
@@ -104,6 +112,9 @@ class InsightCard extends StatelessWidget {
                 if (insight.recommendedAmount != null && insight.isActionable)
                   const SizedBox(width: 15),
 
+                if (insight.recommendedAmount == null && insight.isActionable)
+                  const Spacer(),
+
                 // Action buttons
                 if (insight.isActionable)
                   Row(
@@ -114,10 +125,18 @@ class InsightCard extends StatelessWidget {
                       SizedBox(
                         height: 28,
                         child: ElevatedButton.icon(
-                          onPressed: () => _quickExecuteInsight(context),
-                          icon: const Icon(Icons.flash_on, size: 11),
+                          onPressed: _isLoading ? null : () => _quickExecuteInsight(context),
+                          icon: _isLoading
+                              ? const SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.flash_on, size: 11),
                           label: Text(
-                            'Quick Apply',
+                            _isLoading ? 'Applying...' : 'Quick Apply',
                             style: GoogleFonts.outfit(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -127,6 +146,7 @@ class InsightCard extends StatelessWidget {
                             backgroundColor: purpleColors(context),
                             foregroundColor: primaryColor(context),
                             padding: const EdgeInsets.symmetric(horizontal: 8),
+                            disabledBackgroundColor: purpleColors(context).withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -136,7 +156,7 @@ class InsightCard extends StatelessWidget {
                       // Custom apply button
                       SizedBox(
                         height: 28,
-                        child: OutlinedButton.icon(
+                        child: ElevatedButton.icon(
                           onPressed: () => _showCustomExecutionDialog(context),
                           icon: const Icon(Icons.tune, size: 13),
                           label: Text(
@@ -146,9 +166,9 @@ class InsightCard extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          style: OutlinedButton.styleFrom(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: budgetBackgroundLight(context),
                             foregroundColor: primaryColor(context),
-                            side: BorderSide(color: purpleColors(context)),
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                           ),
                         ),
@@ -243,51 +263,48 @@ class InsightCard extends StatelessWidget {
 
   void _dismissInsight(BuildContext context) {
     final provider = context.read<AIAdvisorProvider>();
-    provider.dismissInsight(insight.id);
+    provider.dismissInsight(widget.insight.id);
 
     showCustomSnackBar(
       context,
-      'Dismissed: ${insight.title}',
+      'Dismissed: ${widget.insight.title}',
       actionLabel: "Undo",
       onAction: () {
-        provider.restoreInsight(insight.id);
+        provider.restoreInsight(widget.insight.id);
       },
     );
 
-    onRefresh?.call();
+    widget.onRefresh?.call();
   }
 
   Future<void> _quickExecuteInsight(BuildContext context) async {
-    final provider = context.read<AIAdvisorProvider>();
+    setState(() {
+      _isLoading = true;
+    });
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+    final provider = context.read<AIAdvisorProvider>();
+    final success = await provider.executeInsight(widget.insight.id);
+
+    if (!context.mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    showCustomSnackBar(
+      context,
+      success ? 'Applied successfully!' : 'Failed to apply changes',
     );
 
-    final success = await provider.executeInsight(insight.id);
-
-    if (context.mounted) {
-      Navigator.pop(context); // Close loading dialog
-
-      showCustomSnackBar(
-        context,
-        success ? 'Applied successfully!' : 'Failed to apply changes',
-      );
-
-      onRefresh?.call();
-    }
+    widget.onRefresh?.call();
   }
 
   void _showCustomExecutionDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => CustomInsightExecutionDialog(
-        insight: insight,
-        onExecuted: onRefresh,
+        insight: widget.insight,
+        onExecuted: widget.onRefresh,
       ),
     );
   }

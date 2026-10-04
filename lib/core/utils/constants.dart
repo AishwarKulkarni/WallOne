@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-// Colors based on theme
+// --- Premium Monochromatic Theme Colors ---
 
+// Backgrounds
 Color mainColor(BuildContext context) =>
     Theme.of(context).brightness == Brightness.light
         ? const Color(0xFFF3F4F6)
@@ -12,16 +13,25 @@ Color boxColor(BuildContext context) =>
         ? Colors.white
         : const Color(0xFF232326);
 
+// Primary Text/Icons
+Color primaryColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.light
+        ? Colors.grey.shade800
+        : Colors.white70;
+
 Color inversePrimaryColor(BuildContext context) =>
     Theme.of(context).brightness == Brightness.light
         ? Colors.white
         : const Color(0xFF424345);
 
-/// NOTE: switchColor is used in dynamic_buttons.dart for a toggle background.
-/// The value is intentionally the same shade across modes as the buttons use
-/// their own overlay for active/inactive state differentiation.
 const Color switchColor = Color(0xFF424345);
 
+Color actualInversePrimaryColor(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.light
+        ? Colors.white70
+        : Colors.black;
+
+// Accent Colors (Subtle & Sophisticated)
 Color purpleColors(BuildContext context) =>
     Theme.of(context).brightness == Brightness.light
         ? Colors.deepPurpleAccent.shade100
@@ -32,16 +42,7 @@ Color cardTextColor(BuildContext context) =>
         ? Colors.deepPurpleAccent.shade100
         : Colors.white70;
 
-Color primaryColor(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.light
-        ? Colors.grey.shade800
-        : Colors.white70;
-
-Color actualInversePrimaryColor(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.light
-        ? Colors.white70
-        : Colors.black;
-
+// Shadows & Overlays
 Color shadowColor(BuildContext context) =>
     Theme.of(context).brightness == Brightness.light
         ? Colors.black26
@@ -52,7 +53,7 @@ Color snackbarColor(BuildContext context) =>
         ? Colors.white
         : Colors.grey.shade900;
 
-// Budget Card Colors
+// Budget Colors (Desaturated/Sophisticated)
 Color budgetBackgroundLight(BuildContext context) =>
     Theme.of(context).brightness == Brightness.light
         ? Colors.grey.shade100
@@ -87,6 +88,24 @@ Color budgetDeleteBackground(BuildContext context) =>
     Theme.of(context).brightness == Brightness.light
         ? Colors.red.shade400
         : Colors.red.shade700;
+
+// --- 8pt Grid Spacing Tokens ---
+class AppSpacing {
+  static const double xs = 4.0;
+  static const double sm = 8.0;
+  static const double md = 16.0;
+  static const double lg = 24.0;
+  static const double xl = 32.0;
+  static const double xxl = 48.0;
+}
+
+// --- Border Radius Tokens ---
+class AppRadius {
+  static const double sm = 8.0;
+  static const double md = 12.0;
+  static const double lg = 16.0;
+  static const double xl = 24.0;
+}
 
 // Snackbar
 

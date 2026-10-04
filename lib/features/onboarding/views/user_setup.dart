@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,7 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:wallone/features/ads/widgets/intertitial_ad_widget.dart';
 import 'package:wallone/features/ads/ad_manager.dart';
 import 'package:wallone/core/utils/constants.dart';
-import 'package:wallone/core/utils/layout.dart';
+import 'package:go_router/go_router.dart';
 import 'package:wallone/features/settings/providers/userprofile_provider.dart';
 
 class UserSetupPage extends StatefulWidget {
@@ -24,6 +24,7 @@ class UserSetupPage extends StatefulWidget {
 class _UserSetupPageState extends State<UserSetupPage> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
+  final TextEditingController _confirmPassword = TextEditingController();
   final TextEditingController _name = TextEditingController();
   File? _coverImage;
   final ImagePicker picker = ImagePicker();
@@ -77,10 +78,7 @@ class _UserSetupPageState extends State<UserSetupPage> {
   }
 
   void _goToHome() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const DesignLayout()),
-    );
+    context.go('/layout');
   }
 
   @override
@@ -88,11 +86,17 @@ class _UserSetupPageState extends State<UserSetupPage> {
     _interstitialAd?.dispose();
     _email.dispose();
     _password.dispose();
+    _confirmPassword.dispose();
     _name.dispose();
     super.dispose();
   }
 
   Future<void> signUp() async {
+    if (_password.text != _confirmPassword.text) {
+      snack("Passwords do not match");
+      return;
+    }
+
     try {
       setState(() => isLoading = true);
       final credential =
@@ -156,7 +160,9 @@ class _UserSetupPageState extends State<UserSetupPage> {
       // Go to the main app
       _showAdAndGoHome();
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
         snack("Invalid email or password");
       } else if (e.code == 'invalid-email') {
         snack("Invalid email format");
@@ -180,8 +186,6 @@ class _UserSetupPageState extends State<UserSetupPage> {
       snack("Failed to pick image: $e");
     }
   }
-
-
 
   Future<void> saveProfile() async {
     if (_name.text.trim().isEmpty) {
@@ -229,8 +233,6 @@ class _UserSetupPageState extends State<UserSetupPage> {
     }
   }
 
-
-
   void snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -253,63 +255,153 @@ class _UserSetupPageState extends State<UserSetupPage> {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Spacer(),
           Text(
             _isSignIn ? "Welcome Back!" : "Create Account",
             style: GoogleFonts.outfit(
-              color: purpleColors(context),
+              color: primaryColor(context),
               fontSize: 30,
               fontWeight: FontWeight.bold,
             ),
           ),
+          Text(
+            _isSignIn ? "Sign in to continue" : "Create an account",
+            style: GoogleFonts.outfit(
+              color: primaryColor(context),
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
           const SizedBox(height: 40),
-          TextField(
-            controller: _email,
-            style: GoogleFonts.outfit(color: primaryColor(context)),
-            decoration: InputDecoration(
-              labelText: "Email Address",
-              labelStyle: GoogleFonts.outfit(color: primaryColor(context)),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: purpleColors(context)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: purpleColors(context), width: 2),
-                borderRadius: BorderRadius.circular(10),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor(context).withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _email,
+              style: GoogleFonts.outfit(color: budgetTextLight(context)),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: boxColor(context),
+                labelText: "Email Address",
+                labelStyle: GoogleFonts.outfit(color: primaryColor(context)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide:
+                      BorderSide(color: purpleColors(context), width: 2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ),
           const SizedBox(height: 20),
-          TextField(
-            controller: _password,
-            obscureText: true,
-            style: GoogleFonts.outfit(color: primaryColor(context)),
-            decoration: InputDecoration(
-              labelText: "Password",
-              labelStyle: GoogleFonts.outfit(color: primaryColor(context)),
-              enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: purpleColors(context)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: purpleColors(context), width: 2),
-                borderRadius: BorderRadius.circular(10),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor(context).withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _password,
+              obscureText: true,
+              style: GoogleFonts.outfit(color: budgetTextLight(context)),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: boxColor(context),
+                labelText: "Password",
+                labelStyle: GoogleFonts.outfit(color: primaryColor(context)),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide:
+                      BorderSide(color: purpleColors(context), width: 2),
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ),
+          if (!_isSignIn) ...[
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor(context).withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _confirmPassword,
+                obscureText: true,
+                style: GoogleFonts.outfit(color: budgetTextLight(context)),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: boxColor(context),
+                  labelText: "Confirm Password",
+                  labelStyle: GoogleFonts.outfit(color: primaryColor(context)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide:
+                        BorderSide(color: purpleColors(context), width: 2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          if (_isSignIn) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                "Forgot Password?",
+                style: GoogleFonts.outfit(
+                  color: purpleColors(context),
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
           const Spacer(),
           isLoading
-              ? CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation(purpleColors(context)),
+              ? Align(
+                  alignment: Alignment.center,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(purpleColors(context)),
+                  ),
                 )
               : Column(
                   children: [
                     ElevatedButton(
                       style: ButtonStyle(
                         backgroundColor: WidgetStatePropertyAll(
-                          purpleColors(context),
+                          primaryColor(context),
                         ),
                         padding: const WidgetStatePropertyAll(
                           EdgeInsets.symmetric(horizontal: 40, vertical: 16),
@@ -325,7 +417,7 @@ class _UserSetupPageState extends State<UserSetupPage> {
                         _isSignIn ? 'Sign In' : 'Sign Up',
                         style: GoogleFonts.outfit(
                           fontSize: 16,
-                          color: primaryColor(context),
+                          color: inversePrimaryColor(context),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -456,4 +548,3 @@ class _UserSetupPageState extends State<UserSetupPage> {
     );
   }
 }
-

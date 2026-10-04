@@ -1,4 +1,4 @@
-﻿import 'dart:math' as math;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -32,8 +32,6 @@ class BudgetOverviewCard extends StatefulWidget {
 }
 
 class _BudgetOverviewCardState extends State<BudgetOverviewCard> {
-  late AnimationController _animationController;
-
   Timer? _timer;
   final PageController _pageController = PageController();
 
@@ -46,7 +44,6 @@ class _BudgetOverviewCardState extends State<BudgetOverviewCard> {
   @override
   void dispose() {
     _timer?.cancel();
-    _animationController.dispose();
     _pageController.dispose();
     super.dispose();
   }

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:wallone/core/utils/constants.dart';
 
@@ -16,18 +16,17 @@ class _DynamicButtonsWidgetState extends State<DynamicButtonsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     return Container(
-      height: screenWidth / 9,
-      padding: const EdgeInsets.all(5),
+      height: 48.0, // Fixed height for accessibility (min 48dp)
+      padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(
         color: boxColor(context),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           BoxShadow(
-            color: shadowColor(context).withValues(alpha: 0.1),
-            blurRadius: 3,
-            offset: const Offset(0, 2),
+            color: shadowColor(context),
+            blurRadius: 24,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -42,29 +41,25 @@ class _DynamicButtonsWidgetState extends State<DynamicButtonsWidget> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                height: screenWidth / 9,
+                curve: Curves.easeOutCubic,
                 decoration: BoxDecoration(
                   color: isExpensesSelected
-                      ? purpleColors(context)
+                      ? purpleColors(context).withValues(alpha: 0.15)
                       : Colors.transparent,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(10),
-                    topLeft: Radius.circular(10),
-                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Center(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
+                      curve: Curves.easeOutCubic,
                       style: GoogleFonts.outfit(
                         color: isExpensesSelected
-                            ? primaryColor(context)
-                            : switchColor,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
+                            ? purpleColors(context)
+                            : cardTextColor(context),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                       child: const Text("Expenses"),
                     ),
@@ -83,29 +78,25 @@ class _DynamicButtonsWidgetState extends State<DynamicButtonsWidget> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                height: screenWidth / 9,
+                curve: Curves.easeOutCubic,
                 decoration: BoxDecoration(
                   color: isExpensesSelected
                       ? Colors.transparent
-                      : purpleColors(context),
-                  borderRadius: const BorderRadius.only(
-                    bottomRight: Radius.circular(10),
-                    topRight: Radius.circular(10),
-                  ),
+                      : purpleColors(context).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Center(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: AnimatedDefaultTextStyle(
                       duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
+                      curve: Curves.easeOutCubic,
                       style: GoogleFonts.outfit(
                         color: isExpensesSelected
-                            ? switchColor
-                            : primaryColor(context),
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
+                            ? cardTextColor(context)
+                            : purpleColors(context),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                       child: const Text("Income"),
                     ),
@@ -119,4 +110,3 @@ class _DynamicButtonsWidgetState extends State<DynamicButtonsWidget> {
     );
   }
 }
-

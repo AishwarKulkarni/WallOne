@@ -1,13 +1,13 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:wallone/features/dashboard/models/balance_model.dart';
-import 'package:wallone/features/onboarding/views/onboarding_page.dart';
 import 'package:wallone/features/ai_adviser/providers/adviser_provider.dart';
 import 'package:wallone/features/budget/providers/budget_provider.dart';
 import 'package:wallone/features/categories/providers/category_provider.dart';
@@ -822,10 +822,7 @@ class BalanceProvider extends ChangeNotifier {
 
       // Navigate to onboarding
       if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const OnboardingPage()),
-            (route) => false);
+        context.go('/onboarding');
         _log('Navigated to onboarding page');
       }
     } catch (e, st) {

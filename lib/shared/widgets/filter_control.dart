@@ -25,9 +25,7 @@ class TransactionFilterControls extends StatelessWidget {
     final keyFormat = DateFormat('yyyy-MM-dd');
     final displayFormat = DateFormat('MM-dd');
 
-    final Map<String, String> options = {
-      'All Transactions': 'All Transactions'
-    };
+    final Map<String, String> options = {'All Dates': 'All Dates'};
 
     for (int i = 0; i < days; i++) {
       final date = now.subtract(Duration(days: i));
@@ -41,7 +39,7 @@ class TransactionFilterControls extends StatelessWidget {
     }
 
     if (currentSelected.isNotEmpty &&
-        currentSelected != 'All Transactions' &&
+        currentSelected != 'All Dates' &&
         currentSelected != 'Custom_Date' &&
         !options.containsKey(currentSelected)) {
       options[currentSelected] = currentSelected;
@@ -52,8 +50,7 @@ class TransactionFilterControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final actualValue =
-        selectedPeriod.isEmpty ? 'All Transactions' : selectedPeriod;
+    final actualValue = selectedPeriod.isEmpty ? 'All Dates' : selectedPeriod;
     final dateOptions = _generateDateOptions(actualValue);
 
     return DropdownMenuDynamicWidget(

@@ -349,7 +349,7 @@ class _InsightsTabState extends State<InsightsTab> {
               style: GoogleFonts.outfit(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: purpleColors(context),
+              backgroundColor: inversePrimaryColor(context),
               foregroundColor: primaryColor(context),
             ),
           ),

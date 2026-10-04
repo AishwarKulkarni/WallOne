@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -25,7 +26,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   bool isExpensesSelected = true;
-  String selectedPeriod = 'All Transactions';
+  String selectedPeriod = 'All Dates';
 
   final ScrollController _scrollController = ScrollController();
   bool isBalanceVisible = true;
@@ -61,11 +62,11 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     final code = context.read<BalanceProvider>().currencyCode;
     final symbol = NumberFormat.simpleCurrency(name: code).currencySymbol;
-    final totalBalance = context.select<BalanceProvider, double>((p) => p.totalBalance);
+    final totalBalance =
+        context.select<BalanceProvider, double>((p) => p.totalBalance);
 
     return CustomScrollView(
       controller: _scrollController,
-      physics: const BouncingScrollPhysics(),
       slivers: [
         // Scroll Below - Balance Section
         SliverToBoxAdapter(
@@ -115,7 +116,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        selectedPeriod != 'All Transactions'
+                        selectedPeriod != 'All Dates'
                             ? Row(
                                 spacing: 10,
                                 children: [
@@ -214,7 +215,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               .setFilter(
                             isExpensesSelected: isExpensesSelected,
                             period: selectedPeriod,
-                            isActive: selectedPeriod != 'All Transactions',
+                            isActive: selectedPeriod != 'All Dates',
                           );
                         },
                       ),
@@ -225,20 +226,25 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: TransactionFilterControls(
                         isExpensesSelected: isExpensesSelected,
                         selectedPeriod: selectedPeriod,
+                        showCustomDateOption: true,
                         onTypeChanged: (value) =>
                             setState(() => isExpensesSelected = value),
                         onPeriodChanged: (period) {
-                          final newPeriod = period ?? 'All Transactions';
-                          setState(() {
-                            selectedPeriod = newPeriod;
-                          });
+                          if (period == 'Custom_Date') {
+                            _showCustomDatePicker(context);
+                          } else {
+                            final newPeriod = period ?? 'All Dates';
+                            setState(() {
+                              selectedPeriod = newPeriod;
+                            });
 
-                          Provider.of<ListProvider>(context, listen: false)
-                              .setFilter(
-                            isExpensesSelected: isExpensesSelected,
-                            period: newPeriod,
-                            isActive: newPeriod != 'All Transactions',
-                          );
+                            Provider.of<ListProvider>(context, listen: false)
+                                .setFilter(
+                              isExpensesSelected: isExpensesSelected,
+                              period: newPeriod,
+                              isActive: newPeriod != 'All Dates',
+                            );
+                          }
                         },
                       ),
                     )
@@ -262,13 +268,18 @@ class _DashboardPageState extends State<DashboardPage> {
               // Group transactions by date
               final Map<String, List<AllListProvider>> groupedTransactions = {};
               for (final transaction in transactions) {
-                DateTime parsedDate;
-                try {
-                  parsedDate = DateTime.parse(transaction.date);
-                } catch (e) {
-                  parsedDate = DateFormat('dd-MM-yyyy').parse(transaction.date);
+                String dateKey;
+                final dt = DateTime.tryParse(transaction.createdAt.isNotEmpty ? transaction.createdAt : transaction.date);
+                if (dt != null) {
+                  dateKey = "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+                } else {
+                  try {
+                    final parsedDate = DateFormat('dd-MM-yyyy').parse(transaction.date);
+                    dateKey = "${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}";
+                  } catch (_) {
+                    dateKey = "1970-01-01";
+                  }
                 }
-                final dateKey = DateFormat('yyyy-MM-dd').format(parsedDate);
                 (groupedTransactions[dateKey] ??= []).add(transaction);
               }
 
@@ -362,5 +373,180 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _showCustomDatePicker(BuildContext context) async {
+    final screenWidth = MediaQuery.of(context).size.width;
+    DateTime tempDate = DateTime.now();
+    DateTime? pickedDate;
+
+    await showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Select Date",
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: anim1, curve: Curves.easeOut),
+          child: ScaleTransition(
+            scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+            child: child,
+          ),
+        );
+      },
+      pageBuilder: (ctx, anim1, __) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: boxColor(context),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor(context).withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: primaryColor(context),
+                          foregroundColor: inversePrimaryColor(context),
+                        ),
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Select Date',
+                        style: GoogleFonts.outfit(
+                          fontSize: screenWidth / 20,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  CupertinoTheme(
+                    data: CupertinoThemeData(
+                      textTheme: CupertinoTextThemeData(
+                        dateTimePickerTextStyle: GoogleFonts.outfit(
+                          fontSize: screenWidth / 25,
+                          color: cardTextColor(context),
+                        ),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          height: 200,
+                          decoration: BoxDecoration(
+                            color: boxColor(context),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    shadowColor(context).withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
+                          ),
+                          child: CupertinoDatePicker(
+                            mode: CupertinoDatePickerMode.date,
+                            initialDateTime: tempDate,
+                            onDateTimeChanged: (dt) {
+                              setStateDialog(() {
+                                tempDate = dt;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: boxColor(context),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    shadowColor(context).withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                DateFormat('yyyy/MM/dd').format(tempDate),
+                                style: GoogleFonts.outfit(
+                                  fontSize: screenWidth / 30,
+                                  color: primaryColor(context),
+                                ),
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                iconSize: screenWidth / 15,
+                                icon: const Icon(Icons.refresh),
+                                color: Colors.redAccent,
+                                tooltip: 'Reset date',
+                                onPressed: () {
+                                  setStateDialog(() {
+                                    tempDate = DateTime.now();
+                                  });
+                                },
+                              ),
+                              IconButton(
+                                iconSize: screenWidth / 15,
+                                icon: const Icon(Icons.check_circle_outline),
+                                color: primaryColor(context),
+                                onPressed: () {
+                                  pickedDate = tempDate;
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    if (pickedDate != null) {
+      final newPeriod = DateFormat('yyyy-MM-dd').format(pickedDate!);
+      
+      if (!context.mounted) return;
+
+      setState(() {
+        selectedPeriod = newPeriod;
+      });
+
+      Provider.of<ListProvider>(context, listen: false).setFilter(
+        isExpensesSelected: isExpensesSelected,
+        period: newPeriod,
+        isActive: true,
+      );
+    }
   }
 }

@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:wallone/core/models/icon_map_model.dart';
-import 'package:wallone/features/transactions/views/edit_transactions.dart';
 import 'package:wallone/features/dashboard/providers/balance_provider.dart';
 import 'package:wallone/features/transactions/providers/list_provider.dart';
 import 'package:wallone/features/categories/providers/category_provider.dart';
@@ -50,12 +50,8 @@ class _ItemListWidgetState extends State<ItemListWidget> {
     // Sort transactions newest-first to compute consistent before-balances
     final List<AllListProvider> sortedForCalc = List.of(widget.transactions);
     sortedForCalc.sort((a, b) {
-      final da = DateTime.tryParse(a.createdAt) ??
-          DateTime.tryParse(a.date) ??
-          DateTime.fromMillisecondsSinceEpoch(0);
-      final db = DateTime.tryParse(b.createdAt) ??
-          DateTime.tryParse(b.date) ??
-          DateTime.fromMillisecondsSinceEpoch(0);
+      final da = _parseDateFast(a.createdAt, a.date);
+      final db = _parseDateFast(b.createdAt, b.date);
       return db.compareTo(da);
     });
 
@@ -93,15 +89,15 @@ class _ItemListWidgetState extends State<ItemListWidget> {
     });
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Container(
         decoration: BoxDecoration(
           color: boxColor(context),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
-              color: shadowColor(context).withValues(alpha: 0.1),
-              blurRadius: 10,
+              color: shadowColor(context),
+              blurRadius: 24,
               offset: const Offset(0, 4),
             ),
           ],
@@ -155,15 +151,26 @@ class _ItemListWidgetState extends State<ItemListWidget> {
     );
   }
 
-  DateTime _parseDate(String date) {
-    try {
-      if (date.length <= 5) {
-        return DateFormat('dd-MM-yyyy').parse('$date-${DateTime.now().year}');
-      }
-      return DateTime.parse(date);
-    } catch (_) {
-      return DateFormat('dd-MM-yyyy').parse(date);
+  DateTime _parseDateFast(String? createdAt, String? dateStr) {
+    if (createdAt != null && createdAt.isNotEmpty) {
+      final dt = DateTime.tryParse(createdAt);
+      if (dt != null) return dt;
     }
+    if (dateStr != null && dateStr.isNotEmpty) {
+      final dt = DateTime.tryParse(dateStr);
+      if (dt != null) return dt;
+      try {
+        if (dateStr.length <= 5) {
+          return DateFormat('dd-MM-yyyy').parse('$dateStr-${DateTime.now().year}');
+        }
+        return DateFormat('dd-MM-yyyy').parse(dateStr);
+      } catch (_) {}
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  DateTime _parseDate(String date) {
+    return _parseDateFast(null, date);
   }
 
   Future<void> _confirmDelete(
@@ -180,12 +187,8 @@ class _ItemListWidgetState extends State<ItemListWidget> {
 
   Future<void> _editTransaction(
       BuildContext context, AllListProvider transaction) async {
-    final updatedTransaction = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditTransactionPage(transaction: transaction),
-      ),
-    );
+    final updatedTransaction = await context
+        .push<AllListProvider>('/edit-transaction', extra: transaction);
 
     if (updatedTransaction != null && context.mounted) {
       context.read<ListProvider>().editTransaction(updatedTransaction);
@@ -252,9 +255,9 @@ class _TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
-        left: 10,
-        right: 10,
-        bottom: 10,
+        left: AppSpacing.sm,
+        right: AppSpacing.sm,
+        bottom: AppSpacing.sm,
       ),
       child: Slidable(
         closeOnScroll: true,
@@ -290,17 +293,18 @@ class _TransactionTile extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: boxColor(context),
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             boxShadow: [
               BoxShadow(
-                color: shadowColor(context).withValues(alpha: 0.1),
-                blurRadius: 3,
-                offset: const Offset(0, 2),
+                color: shadowColor(context),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: AppSpacing.sm),
             child: Row(
               children: [
                 _TransactionIcon(category: transaction.category),

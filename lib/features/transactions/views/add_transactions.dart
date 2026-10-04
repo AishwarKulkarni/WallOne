@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -27,7 +27,6 @@ class AddTransactionsPage extends StatefulWidget {
 class _AddTransactionsPageState extends State<AddTransactionsPage>
     with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
-  double _fieldWidth = 50;
 
   String? selectedTitle;
   String? selectedCategory;
@@ -45,7 +44,6 @@ class _AddTransactionsPageState extends State<AddTransactionsPage>
       Provider.of<TransactionTypeProvider>(context, listen: false)
           .resetToExpenses();
     });
-    _controller.addListener(_updateFieldWidth);
     _loadInterstitialAd();
   }
 
@@ -121,24 +119,7 @@ class _AddTransactionsPageState extends State<AddTransactionsPage>
     _isInterstitialReady = false;
   }
 
-  void _updateFieldWidth() {
-    final textSize = (TextPainter(
-      text: TextSpan(
-        text: _controller.text.isEmpty ? "0" : _controller.text,
-        style: GoogleFonts.outfit(
-          fontSize: 70,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      maxLines: 1,
-      textDirection: TextDirection.ltr,
-    )..layout())
-        .size;
 
-    setState(() {
-      _fieldWidth = textSize.width + 5;
-    });
-  }
 
   void _showDateTimePicker() {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -417,42 +398,61 @@ class _AddTransactionsPageState extends State<AddTransactionsPage>
                 ),
               ),
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  symbol,
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    color: purpleColors(context),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(
-                  width: _fieldWidth,
-                  child: TextField(
-                    controller: _controller,
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                final textSize = (TextPainter(
+                  text: TextSpan(
+                    text: _controller.text.isEmpty ? "0" : _controller.text,
                     style: GoogleFonts.outfit(
                       fontSize: 70,
-                      color: primaryColor(context),
                       fontWeight: FontWeight.bold,
                     ),
-                    decoration: InputDecoration(
-                      hintText: "0",
-                      hintStyle: TextStyle(
-                        color: primaryColor(context),
-                      ),
-                      border: InputBorder.none,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(7),
-                    ],
                   ),
-                ),
-              ],
+                  maxLines: 1,
+                  textDirection: TextDirection.ltr,
+                )..layout())
+                    .size;
+                final fieldWidth = textSize.width + 5;
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      symbol,
+                      style: GoogleFonts.outfit(
+                        fontSize: 16,
+                        color: purpleColors(context),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(
+                      width: fieldWidth,
+                      child: TextField(
+                        controller: _controller,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          fontSize: 70,
+                          color: primaryColor(context),
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: "0",
+                          hintStyle: TextStyle(
+                            color: primaryColor(context),
+                          ),
+                          border: InputBorder.none,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(7),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const Spacer(),
             Align(
